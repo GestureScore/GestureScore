@@ -1,0 +1,8 @@
+*.zip
+*.npy
+resulting/*
+result/*
+.DS_Store
+__pycache__/
+*.bin
+*.pth
