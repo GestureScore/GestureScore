@@ -74,9 +74,9 @@ if __name__ == '__main__':
 
     # Setup parameter parser
     parser = ArgumentParser(add_help=False)
-    parser.add_argument('--bvh_dir', '-orig', required=True,
+    parser.add_argument('--bvh_dir', '-orig', required=True, default="./groundtruth/bvh",
                                    help="Path where original motion files (in BVH format) are stored")
-    parser.add_argument('--dest_dir', '-dest', required=True,
+    parser.add_argument('--dest_dir', '-dest', required=True, default="./groundtruth/npy",
                                    help="Path where extracted motion features will be stored")
     parser.add_argument('--pipeline_dir', '-pipe', default="./utils/",
                         help="Path where the motion data processing pipeline will be stored")

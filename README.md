@@ -3,12 +3,12 @@
 GestureScore
 
 This directory provides the scripts for quantitative evaluation of our gesture generation framework. We currently support the following measures:
+
 - Average Jerk and Acceleration (AJ)
 - Histogram of Moving Distance (HMD) for velocity and acceleration
 - Hellinger distance between histograms
-- Canonical Correlation Analysis (CCA) coefficient 
+- Canonical Correlation Analysis (CCA) coefficient
 - Fréchet Gesture Distance (FGD)
-
 
 ## Average Jerk and Acceleration (AJ)
 
