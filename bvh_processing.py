@@ -165,7 +165,8 @@ def preprocess_animation(animation_file, fps=60):
 
 if __name__ == '__main__':
     """
-    python bvh2npy.py --bvh_dir="./groundtruth/bvh" --npy_dir="./groundtruth/bvh" --pipeline_dir="./groundtruth"
+    python bvh_processing.py --bvh_dir="./groundtruth/bvh" --npy_dir="./groundtruth/npy"
+    python bvh_processing.py --bvh_dir="./mydata/bvh" --npy_dir="./mydata/bvh"
     """
     # Setup parameter parser
     parser = ArgumentParser(add_help=False)

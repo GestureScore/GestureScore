@@ -48,27 +48,29 @@ def extract_joint_angles(bvh_dir, files, npy_dir, pipeline_dir, fps):
     #     data_all = list(executor.map(process_file, files))
 
     data_pipe = Pipeline([
-        # ('dwnsampl', DownSampler(rate=fps)),
+        ('dwnsampl', DownSampler(tgt_fps=fps, keep_all=False)),
         # ('root', RootNormalizer()),
+
         ('jtsel', JointSelector(target_joints, include_root=False)),
         ('position', MocapParameterizer('position')),
+        # ('slicer', Slicer(88)),
         ('np', Numpyfier())
     ])
-    #
+
     out_data = data_pipe.fit_transform(data_all)
-    #
-    # # the data pipe will append the mirrored files to the end
+
+    print(out_data.shape)
+
+    # the data pipe will append the mirrored files to the end
     # assert len(out_data) == len(files)
-    #
-    # jl.dump(data_pipe, os.path.join(pipeline_dir + 'data_pipe.sav'))
-    #
-    # fi = 0
-    # for f in files:
-    #     ff = f.split("/")[-1]
-    #     print(ff)
-    #     npy_file = os.path.join(npy_dir, ff[:-4] + ".npy")
-    #     np.save(npy_file, out_data[fi])
-    #     fi = fi + 1
+
+    jl.dump(data_pipe, os.path.join(pipeline_dir + 'data_pipe.sav'))
+
+    for i, f in enumerate(files):
+        ff = f.split("/")[-1]
+        print("Saving npy: ", ff)
+        npy_file = os.path.join(npy_dir, ff[:-4] + ".npy")
+        np.save(npy_file, out_data[i])
 
 
 if __name__ == '__main__':
@@ -77,17 +79,17 @@ if __name__ == '__main__':
     """
     # Setup parameter parser
     parser = ArgumentParser(add_help=False)
-    parser.add_argument('--bvh_dir', '-orig', required=True, default="./groundtruth/bvh",
+    parser.add_argument('--bvh_dir', '-bvh', required=True, default="./groundtruth/bvh",
                         help="Path where original motion files (in BVH format) are stored")
-    parser.add_argument('--npy_dir', '-npy_dir', required=True, default="./groundtruth/npy",
+    parser.add_argument('--npy_dir', '-npy', required=True, default="./groundtruth/npy",
                         help="Path where extracted motion features will be stored")
     parser.add_argument('--pipeline_dir', '-pipe', default="./groundtruth/",
                         help="Path where the motion data processing pipeline will be stored")
 
-    params = parser.parse_args()
+    args = parser.parse_args()
 
     print("Going to pre-process the following motion files:")
-    files = sorted([f for f in glob.iglob(params.bvh_dir + '/*.bvh')])[:2]
+    files = sorted([f for f in glob.iglob(args.bvh_dir + '/*.bvh')])[:2]
     print("Total files: {}".format(len(files)))
 
-    extract_joint_angles(params.bvh_dir, files, params.npy_dir, params.pipeline_dir, fps=60)
+    extract_joint_angles(args.bvh_dir, files, args.npy_dir, args.pipeline_dir, fps=60)

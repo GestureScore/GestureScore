@@ -175,12 +175,9 @@ def evaluate_folder(cond_name, coord_dir, measure):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(
-        description='Calculate prediction errors')
-    parser.add_argument('--coords_dir', '-c', default='data',
-                        help='Predicted gesture directory')
-    parser.add_argument('--measure', '-m', default='acceleration',
-                        help='Measure to calculate (jerk or acceleration)')
+    parser = argparse.ArgumentParser(description='Calculate prediction errors')
+    parser.add_argument('--coords_dir', '-c', default='data', help='Predicted gesture directory')
+    parser.add_argument('--measure', '-m', default='acceleration', help='Measure to calculate (jerk or acceleration)')
     args = parser.parse_args()
 
     # Make sure that data is stored in the correct folder
@@ -196,7 +193,7 @@ if __name__ == '__main__':
     for cond_name in os.listdir(args.coords_dir):
         if cond_name == ".DS_Store":
             continue
-        #print(cond_name)
+        # print(cond_name)
         evaluate_folder(cond_name, args.coords_dir, args.measure)
 
     print('More detailed result was writen to the files in the "result" folder ')
