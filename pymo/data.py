@@ -25,11 +25,11 @@ class MocapData():
     def clone(self):
         import copy
         new_data = MocapData()
-        new_data.skeleton = copy.copy(self.skeleton)
-        new_data.values = copy.copy(self.values)
-        new_data.channel_names = copy.copy(self.channel_names)
-        new_data.root_name = copy.copy(self.root_name)
-        new_data.framerate = copy.copy(self.framerate)
+        new_data.skeleton = copy.deepcopy(self.skeleton)
+        new_data.values = copy.deepcopy(self.values)
+        new_data.channel_names = copy.deepcopy(self.channel_names)
+        new_data.root_name = copy.deepcopy(self.root_name)
+        new_data.framerate = copy.deepcopy(self.framerate)
         return new_data
 
     def get_all_channels(self):
