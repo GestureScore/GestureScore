@@ -1,13 +1,14 @@
 import json
 import pdb
 import numpy as np
-from omegaconf import DictConfig
+
 import os
 import sys
 from anim import bvh, quat, txform
 import torch
 from argparse import ArgumentParser
 from scipy.signal import savgol_filter
+from omegaconf import DictConfig
 
 # from utils_zeggs import write_bvh
 
@@ -16,6 +17,7 @@ bone_names = [
     "RightHandPinky3", "RightHandPinky4", "RightForeArmEnd", "RightArmEnd", "LeftShoulder", "LeftArm", "LeftForeArm", "LeftHand", "LeftHandThumb1", "LeftHandThumb2", "LeftHandThumb3", "LeftHandThumb4", "LeftHandIndex1", "LeftHandIndex2", "LeftHandIndex3", "LeftHandIndex4", "LeftHandMiddle1", "LeftHandMiddle2", "LeftHandMiddle3", "LeftHandMiddle4", "LeftHandRing1", "LeftHandRing2", "LeftHandRing3", "LeftHandRing4", "LeftHandPinky1", "LeftHandPinky2", "LeftHandPinky3", "LeftHandPinky4",
     "LeftForeArmEnd", "LeftArmEnd", "RightUpLeg", "RightLeg", "RightFoot", "RightToeBase", "RightToeBaseEnd", "RightLegEnd", "RightUpLegEnd", "LeftUpLeg", "LeftLeg", "LeftFoot", "LeftToeBase", "LeftToeBaseEnd", "LeftLegEnd", "LeftUpLegEnd"
 ]
+
 
 
 def preprocess_animation(animation_file, fps=60):
