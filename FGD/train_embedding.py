@@ -154,7 +154,7 @@ def main(args, gesture_dim, n_frames, device):
     # save model
     state_dict = model.cpu().state_dict()
     file_path = f'output/model_checkpoint_{gesture_dim}_{n_frames}.bin'
-    torch.save({'gesture_dim': gesture_dim, 'n_frames': n_frames, 'gen_dict': state_dict}, file_path)
+    torch.save({'gesture_dim': gesture_dim, 'n_frames': n_frames, 'embedding_model': state_dict}, file_path)
 
 
 if __name__ == '__main__':

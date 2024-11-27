@@ -2,21 +2,18 @@ import numpy as np
 import torch
 from scipy import linalg
 
-from embedding_net import EmbeddingNet
-
-import warnings
-
-warnings.filterwarnings("ignore", category=RuntimeWarning)  # ignore warnings
-
 
 class EmbeddingSpaceEvaluator:
-    def __init__(self, embed_net_path, n_frames, device):
-        # init embed net
-        ckpt = torch.load(embed_net_path, map_location=device, weights_only=True)
-        self.pose_dim = ckpt['gesture_dim']
-        self.net = EmbeddingNet(self.pose_dim, n_frames).to(device)
-        self.net.load_state_dict(ckpt['gen_dict'])
-        self.net.eval()
+    def __init__(self, model_embedding, gesture_dim, n_frames):
+        # data feature
+        self.pose_dim = gesture_dim
+        self.model_embedding = model_embedding
+
+        # sample data
+        self.real_samples = []
+        self.generate_samples = []
+        self.real_feat_list = []
+        self.generated_feat_list = []
 
         self.reset()
 
@@ -30,12 +27,12 @@ class EmbeddingSpaceEvaluator:
         return len(self.real_feat_list)
 
     def push_real_samples(self, samples):
-        feat, _ = self.net(samples)
+        feat, _ = self.model_embedding(samples)
         self.real_samples.append(samples.cpu().numpy().reshape(samples.shape[0], -1))
         self.real_feat_list.append(feat.data.cpu().numpy())
 
     def push_generated_samples(self, samples):
-        feat, _ = self.net(samples)
+        feat, _ = self.model_embedding(samples)
         self.generate_samples.append(samples.cpu().numpy().reshape(samples.shape[0], -1))
         self.generated_feat_list.append(feat.data.cpu().numpy())
 
@@ -115,3 +112,37 @@ class EmbeddingSpaceEvaluator:
 
         return (diff.dot(diff) + np.trace(sigma1) +
                 np.trace(sigma2) - 2 * tr_covmean)
+
+
+if __name__ == '__main__':
+    from embedding_net import EmbeddingNet
+
+    device = torch.device("mps")
+
+    batch_size = 1067
+    n_frame = 88
+    gesture_dim = 1141
+
+    # model
+    model_embedding = EmbeddingNet(gesture_dim, n_frame)
+    model_embedding.to(device)
+
+    # load model
+    model_embedding_path = f"./output/model_checkpoint_{gesture_dim}_{n_frame}.bin"
+    checkpoint = torch.load(model_embedding_path, map_location=device, weights_only=True)
+
+    model_embedding.load_state_dict(checkpoint['embedding_model'])
+    model_embedding.eval()
+
+    model = EmbeddingSpaceEvaluator(model_embedding, gesture_dim, n_frame)
+    gesture_1 = np.random.rand(batch_size, n_frame, gesture_dim).astype(np.float32)
+    gesture_2 = np.random.rand(batch_size, n_frame, gesture_dim).astype(np.float32)
+
+    mean_1 = np.mean(gesture_1, axis=(1, 2))  # Shape: (batch_size,)
+    variance_1 = np.var(gesture_1, axis=(1, 2))  # Shape: (batch_size,)
+
+    mean_2 = np.mean(gesture_2, axis=(1, 2))  # Shape: (batch_size,)
+    variance_2 = np.var(gesture_2, axis=(1, 2))  # Shape: (batch_size,)
+
+    fid = model.calculate_frechet_distance(mean_1, variance_1, mean_2, variance_2)
+    print(fid)

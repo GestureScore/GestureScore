@@ -4,9 +4,6 @@ import numpy as np
 import torch
 import argparse
 from embedding_space_evaluator import EmbeddingSpaceEvaluator
-from train_AE import make_tensor
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def run_fgd(fgd_evaluator, gt_data, test_data):
@@ -19,11 +16,9 @@ def run_fgd(fgd_evaluator, gt_data, test_data):
     return fgd_on_feat, fdg_on_raw
 
 
-def exp_base(tier, chunk_len):
-    code = 'F' if tier == 'fullbody' else 'U'
-
+def main(args, n_frame, gesture_dim):
     # AE model
-    ae_path = f'output/model_checkpoint_{chunk_len}.bin'
+    ae_path = f'output/model_checkpoint_{gesture_dim}_{n_frame}.bin'
     fgd_evaluator = EmbeddingSpaceEvaluator(ae_path, chunk_len, device)
 
     # load GT data
@@ -43,9 +38,20 @@ def exp_base(tier, chunk_len):
 
 
 if __name__ == '__main__':
-    tier = 'upperbody'
+    """
+    python evaluate_FGD
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--real_dataset', '-real', required=True, default="../data/real_dataset.npz",
+                        help="")
+    parser.add_argument('--predict_dataset', '-predict', required=True, default="../data/predict_dataset.npz",
+                        help="")
+    parser.add_argument('--device', type=str, default='cuda:0')
+    args = parser.parse_args()
 
-    # calculate fgd per system
-    # exp_base(tier, 30)
-    # exp_base(tier, 60)
-    exp_base(tier, 90)
+    device = torch.device(args.gpu)
+
+    n_frame = 88
+    gesture_dim = 1141
+
+    main(args, n_frame, gesture_dim)
