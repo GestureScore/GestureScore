@@ -4,6 +4,19 @@ import numpy as np
 
 
 def ConvNormRelu(in_channels, out_channels, downsample=False, padding=0, batchnorm=True):
+    """
+    Create a convolutional block with optional batch normalization and LeakyReLU activation.
+
+    Args:
+        in_channels (int): Number of input channels
+        out_channels (int): Number of output channels
+        downsample (bool): Whether to use downsampling convolution
+        padding (int): Padding for convolution
+        batchnorm (bool): Whether to use batch normalization
+
+    Returns:
+        nn.Sequential: Convolutional block
+    """
     if not downsample:
         k = 3
         s = 1
@@ -29,20 +42,25 @@ def ConvNormRelu(in_channels, out_channels, downsample=False, padding=0, batchno
     return net
 
 
-class GestureEncoderConv(nn.Module):
-    def __init__(self, dim, length):
+class GestureEncoder(nn.Module):
+    def __init__(self, gesture_dim, n_frames):
         super().__init__()
 
-        self.net = nn.Sequential(
-            ConvNormRelu(dim, 128, batchnorm=True),
+        self.feature_extractor = nn.Sequential(
+            ConvNormRelu(gesture_dim, 128, batchnorm=True),
             ConvNormRelu(128, 64, batchnorm=True),
             ConvNormRelu(64, 64, True, batchnorm=True),
             nn.Conv1d(64, 32, 3)
         )
-        # 32 * k
-        in_channels = 1248
-        self.out_net = nn.Sequential(
-            nn.Linear(in_channels, 256),
+        # Dynamically calculate the size of flattened features
+        with torch.no_grad():
+            dummy_input = torch.randn(1, n_frames, gesture_dim)
+            dummy_features = self.feature_extractor(dummy_input.transpose(1, 2))
+            flattened_size = dummy_features.numel()
+        # in_channels = 32 * n_frames
+        # in_channels = 1248
+        self.embedding_network = nn.Sequential(
+            nn.Linear(flattened_size, 256),
             nn.BatchNorm1d(256),
             nn.LeakyReLU(True),
             nn.Linear(256, 128),
@@ -52,27 +70,28 @@ class GestureEncoderConv(nn.Module):
         )
 
     def forward(self, poses):
-        poses = poses.transpose(1, 2)  # to (bs, dim, seq)
-        out = self.net(poses)
-        out = out.flatten(1)
-        z = self.out_net(out)
+        poses = poses.transpose(1, 2)  # (bs, seq, dim) to (bs, dim, seq)
 
-        return z
+        out = self.feature_extractor(poses)
+        features_flat = out.view(out.size(0), -1)
+        embedding = self.embedding_network(features_flat)
+
+        return embedding
 
 
-class GestureDecoderConv(nn.Module):
-    def __init__(self, dim, length):
+class GestureDecoder(nn.Module):
+    def __init__(self, gesture_dim, n_frames):
         super().__init__()
 
-        out_channels = length * 4
-        self.pre_net = nn.Sequential(
+        out_channels = n_frames * 4
+        self.reconstruction_network = nn.Sequential(
             nn.Linear(32, 64),
             nn.BatchNorm1d(64),
             nn.LeakyReLU(True),
             nn.Linear(64, out_channels),
         )
 
-        self.net = nn.Sequential(
+        self.gesture_generator = nn.Sequential(
             nn.ConvTranspose1d(4, 32, 3),
             nn.BatchNorm1d(32),
             nn.LeakyReLU(0.2, True),
@@ -80,13 +99,13 @@ class GestureDecoderConv(nn.Module):
             nn.BatchNorm1d(32),
             nn.LeakyReLU(0.2, True),
             nn.Conv1d(32, 32, 3),
-            nn.Conv1d(32, dim, 3),
+            nn.Conv1d(32, gesture_dim, 3),
         )
 
     def forward(self, feat):
-        out = self.pre_net(feat)
+        out = self.reconstruction_network(feat)
         out = out.view(feat.shape[0], 4, -1)
-        out = self.net(out)
+        out = self.gesture_generator(out)
         out = out.transpose(1, 2)
         return out
 
@@ -94,8 +113,8 @@ class GestureDecoderConv(nn.Module):
 class EmbeddingNet(nn.Module):
     def __init__(self, gesture_dim, n_frames):
         super().__init__()
-        self.gesture_encoder = GestureEncoderConv(gesture_dim, n_frames)
-        self.gesture_decoder = GestureDecoderConv(gesture_dim, n_frames)
+        self.gesture_encoder = GestureEncoder(gesture_dim, n_frames)
+        self.gesture_decoder = GestureDecoder(gesture_dim, n_frames)
 
     def forward(self, gestures):
         gesture_embedding = self.gesture_encoder(gestures)
@@ -109,12 +128,12 @@ if __name__ == '__main__':  # model test
     batch_size = 1067
     gesture = torch.randn((batch_size, n_frames, gesture_dim))
 
-    # encoder = GestureEncoderConv(gesture_dim, n_frames)
-    # decoder = GestureDecoderConv(gesture_dim, n_frames)
+    # encoder = GestureEncoder(gesture_dim, n_frames)
+    # decoder = GestureDecoder(gesture_dim, n_frames)
     #
     # feat = encoder(gesture)
     # recon_poses = decoder(feat)
-    # #
+    #
     # print('input', gesture.shape)
     # print('feat', feat.shape)
     # print('output', recon_poses.shape)

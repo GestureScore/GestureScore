@@ -15,8 +15,6 @@ class EmbeddingSpaceEvaluator:
         self.real_feat_list = []
         self.generated_feat_list = []
 
-        self.reset()
-
     def reset(self):
         self.real_samples = []
         self.generate_samples = []
@@ -28,11 +26,13 @@ class EmbeddingSpaceEvaluator:
 
     def push_real_samples(self, samples):
         feat, _ = self.model_embedding(samples)
+
         self.real_samples.append(samples.cpu().numpy().reshape(samples.shape[0], -1))
         self.real_feat_list.append(feat.data.cpu().numpy())
 
     def push_generated_samples(self, samples):
         feat, _ = self.model_embedding(samples)
+
         self.generate_samples.append(samples.cpu().numpy().reshape(samples.shape[0], -1))
         self.generated_feat_list.append(feat.data.cpu().numpy())
 

@@ -153,7 +153,8 @@ def main(args, gesture_dim, n_frames, device):
 
     # save model
     state_dict = model.cpu().state_dict()
-    file_path = f'output/model_checkpoint_{gesture_dim}_{n_frames}.pth'
+    file_path = f'output/embedding_network_{gesture_dim}_{n_frames}.pth'
+    print("Saving checkpoint to {}".format(file_path))
     torch.save({'gesture_dim': gesture_dim, 'n_frames': n_frames, 'embedding_model': state_dict}, file_path)
 
 
