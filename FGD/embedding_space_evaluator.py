@@ -117,7 +117,7 @@ class EmbeddingSpaceEvaluator:
 if __name__ == '__main__':
     from embedding_net import EmbeddingNet
 
-    device = torch.device("mps")
+    device = torch.device("cuda:0")
 
     batch_size = 1067
     n_frame = 88
@@ -128,7 +128,7 @@ if __name__ == '__main__':
     model_embedding.to(device)
 
     # load model
-    model_embedding_path = f"./output/model_checkpoint_{gesture_dim}_{n_frame}.bin"
+    model_embedding_path = f"./output/embedding_network_{gesture_dim}_{n_frame}.pth"
     checkpoint = torch.load(model_embedding_path, map_location=device, weights_only=True)
 
     model_embedding.load_state_dict(checkpoint['embedding_model'])
