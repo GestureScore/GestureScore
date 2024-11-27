@@ -23,6 +23,9 @@ class DeepGestureDataset(Dataset):
     def __getitem__(self, index):
         return self.gestures[index]
 
+    def get_all(self):
+        return self.gestures
+
 
 if __name__ == '__main__':
     # dataset = DeepGestureDataset(dataset_file='../data/real_dataset.npz')

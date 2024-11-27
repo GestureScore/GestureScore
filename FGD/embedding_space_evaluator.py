@@ -138,11 +138,18 @@ if __name__ == '__main__':
     gesture_1 = np.random.rand(batch_size, n_frame, gesture_dim).astype(np.float32)
     gesture_2 = np.random.rand(batch_size, n_frame, gesture_dim).astype(np.float32)
 
-    mean_1 = np.mean(gesture_1, axis=(1, 2))  # Shape: (batch_size,)
-    variance_1 = np.var(gesture_1, axis=(1, 2))  # Shape: (batch_size,)
+    g1 = np.vstack(gesture_1)
+    g2 = np.vstack(gesture_2)
+    print(g1.shape, g2.shape)
 
-    mean_2 = np.mean(gesture_2, axis=(1, 2))  # Shape: (batch_size,)
-    variance_2 = np.var(gesture_2, axis=(1, 2))  # Shape: (batch_size,)
+    mean_1 = np.mean(g1)
+    variance_1 = np.var(g1)
+
+    mean_2 = np.mean(g2)
+    variance_2 = np.var(g2)
 
     fid = model.calculate_frechet_distance(mean_1, variance_1, mean_2, variance_2)
     print(fid)
+
+    fid_dis = model.frechet_distance(g1, g2)
+    print(fid_dis)
