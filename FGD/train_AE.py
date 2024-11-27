@@ -1,15 +1,14 @@
 import glob
 import os
-
 import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import optim
 from torch.utils.data import TensorDataset, DataLoader
+from argparse import ArgumentParser
 
 from embedding_net import EmbeddingNet
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+from deepgesturedataset import DeepGestureDataset
 
 
 class AverageMeter(object):
@@ -115,12 +114,9 @@ def make_tensor(path, n_frames, stride=None):
     return torch.Tensor(np.array(samples))
 
 
-def main(tier, n_frames):
-    code = 'F' if tier == 'fullbody' else 'U'
-
-    # dataset
-    train_dataset = TensorDataset(make_tensor(f'../data/{tier}/{code}NA', n_frames))
-    train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=True, drop_last=True)
+def main(args, gesture_dim, n_frames, device):
+    dataset = DeepGestureDataset(dataset_file=args.dataset)
+    train_loader = DataLoader(dataset=dataset, batch_size=64, shuffle=True, drop_last=True)
 
     # train
     loss_meters = [AverageMeter('loss')]
@@ -128,21 +124,17 @@ def main(tier, n_frames):
     # interval params
     print_interval = int(len(train_loader) / 5)
 
-    # init model and optimizer
-    if tier == 'fullbody':
-        pose_dim = 174
-    else:
-        pose_dim = 162
-    generator = EmbeddingNet(pose_dim, n_frames).to(device)
-    gen_optimizer = optim.Adam(generator.parameters(), lr=0.0005, betas=(0.5, 0.999))
+    model = EmbeddingNet(gesture_dim, n_frames).to(device)
+    gen_optimizer = optim.Adam(model.parameters(), lr=0.0005, betas=(0.5, 0.999))
 
     # training
-    for epoch in range(50):
-        for iter_idx, target in enumerate(train_loader, 0):
-            target = target[0]
-            batch_size = target.size(0)
-            target_vec = target.to(device)
-            loss = train_iter(target_vec, generator, gen_optimizer)
+    for epoch in range(args.epoch):
+        for iter_idx, batch in enumerate(train_loader, 0):
+
+            batch = batch[0]
+            batch_size = batch.size(0)
+            target_vec = batch.to(device)
+            loss = train_iter(target_vec, model, gen_optimizer)
 
             # loss values
             for loss_meter in loss_meters:
@@ -160,12 +152,24 @@ def main(tier, n_frames):
                 print(print_summary)
 
     # save model
-    gen_state_dict = generator.state_dict()
-    save_name = f'output/model_checkpoint_{tier}_{n_frames}.bin'
-    torch.save({'pose_dim': pose_dim, 'n_frames': n_frames, 'gen_dict': gen_state_dict}, save_name)
+    gen_state_dict = model.state_dict()
+    file_path = f'output/model_checkpoint_{n_frames}.bin'
+    torch.save({'gesture_dim': gesture_dim, 'n_frames': n_frames, 'gen_dict': gen_state_dict}, file_path)
 
 
 if __name__ == '__main__':
-    tier = 'upperbody'  # fullbody, upperbody
-    n_frames = 90  # 30, 60, 90
-    main(tier, n_frames)
+    parser = ArgumentParser(add_help=False)
+    parser.add_argument('--dataset', '-d', required=True, default="../data/DeepGesture.npz",
+                        help="")
+    parser.add_argument('--gpu', '-gpu', required=True, default="cuda:0",
+                        help="")
+    parser.add_argument('--epoch', '-epoch', type=int, default=50,
+                        help="")
+
+    args = parser.parse_args()
+
+    n_frames = 88
+    gesture_dim = 1141
+    device = torch.device(args.gpu)
+
+    main(args, gesture_dim, n_frames, device)

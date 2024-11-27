@@ -5,17 +5,18 @@ from scipy import linalg
 from embedding_net import EmbeddingNet
 
 import warnings
+
 warnings.filterwarnings("ignore", category=RuntimeWarning)  # ignore warnings
 
 
 class EmbeddingSpaceEvaluator:
     def __init__(self, embed_net_path, n_frames, device):
         # init embed net
-        ckpt = torch.load(embed_net_path, map_location=device)
-        self.pose_dim = ckpt['pose_dim']
+        ckpt = torch.load(embed_net_path, map_location=device, weights_only=True)
+        self.pose_dim = ckpt['gesture_dim']
         self.net = EmbeddingNet(self.pose_dim, n_frames).to(device)
         self.net.load_state_dict(ckpt['gen_dict'])
-        self.net.train(False)
+        self.net.eval()
 
         self.reset()
 

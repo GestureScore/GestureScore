@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import torch
-
+import argparse
 from embedding_space_evaluator import EmbeddingSpaceEvaluator
 from train_AE import make_tensor
 
@@ -23,7 +23,7 @@ def exp_base(tier, chunk_len):
     code = 'F' if tier == 'fullbody' else 'U'
 
     # AE model
-    ae_path = f'output/model_checkpoint_{tier}_{chunk_len}.bin'
+    ae_path = f'output/model_checkpoint_{chunk_len}.bin'
     fgd_evaluator = EmbeddingSpaceEvaluator(ae_path, chunk_len, device)
 
     # load GT data
@@ -39,13 +39,13 @@ def exp_base(tier, chunk_len):
         test_data = make_tensor(folder, chunk_len).to(device)
         fgd_on_feat, fgd_on_raw = run_fgd(fgd_evaluator, gt_data, test_data)
         print(f'{os.path.basename(folder)}: {fgd_on_feat:8.3f}, {fgd_on_raw:8.3f}')
-    print()
+    print("Finish")
 
 
 if __name__ == '__main__':
     tier = 'upperbody'
 
     # calculate fgd per system
-    exp_base(tier, 30)
-    exp_base(tier, 60)
+    # exp_base(tier, 30)
+    # exp_base(tier, 60)
     exp_base(tier, 90)

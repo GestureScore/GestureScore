@@ -166,7 +166,7 @@ def preprocess_animation(animation_file, fps=60):
 if __name__ == '__main__':
     """
     python bvh_processing.py --bvh_dir="./groundtruth/bvh" --npy_dir="./groundtruth/npy"
-    python bvh_processing.py --bvh_dir="./mydata/bvh" --npy_dir="./mydata/bvh"
+    python bvh_processing.py --bvh_dir="./mydata/bvh" --npy_dir="./mydata/npy"
     """
     # Setup parameter parser
     parser = ArgumentParser(add_help=False)
@@ -176,13 +176,17 @@ if __name__ == '__main__':
                         help="Path where extracted motion features will be stored")
 
     args = parser.parse_args()
+    bvh_files = [f for f in sorted(os.listdir(args.bvh_dir)) if f.endswith(".bvh")]
+    assert len(bvh_files) > 0, "No bvh files found"
 
-    bvh_files = os.listdir(args.bvh_dir)
+    if not os.path.exists(args.npy_dir):
+        os.makedirs(args.npy_dir)
 
     for bvh_file in bvh_files:
         print("bvh_file: ", bvh_file)
         bvh_file_path = os.path.join(args.bvh_dir, bvh_file)
         all_poses, parents, dt, order, njoints = preprocess_animation(bvh_file_path, fps=60)
+        print("all_poses: ", np.shape(all_poses))
         np.save(os.path.join(args.npy_dir, f"{bvh_file[:-4]}.npy"), all_poses)
 
         # pose2bvh(poses=all_poses, outpath=os.path.join(animation_file, 'processed', item), length=all_poses.shape[0], smoothing=True, smooth_foot=False)

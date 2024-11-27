@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 
 
 def ConvNormRelu(in_channels, out_channels, downsample=False, padding=0, batchnorm=True):
@@ -28,7 +29,7 @@ def ConvNormRelu(in_channels, out_channels, downsample=False, padding=0, batchno
     return net
 
 
-class PoseEncoderConv(nn.Module):
+class GestureEncoderConv(nn.Module):
     def __init__(self, dim, length):
         super().__init__()
 
@@ -38,16 +39,8 @@ class PoseEncoderConv(nn.Module):
             ConvNormRelu(64, 64, True, batchnorm=True),
             nn.Conv1d(64, 32, 3)
         )
-
-        if length == 30:
-            in_channels = 320
-        elif length == 60:
-            in_channels = 800
-        elif length == 90:
-            in_channels = 1280
-        else:
-            assert False
-
+        # 32 * k
+        in_channels = 1248
         self.out_net = nn.Sequential(
             nn.Linear(in_channels, 256),
             nn.BatchNorm1d(256),
@@ -67,19 +60,11 @@ class PoseEncoderConv(nn.Module):
         return z
 
 
-class PoseDecoderConv(nn.Module):
+class GestureDecoderConv(nn.Module):
     def __init__(self, dim, length):
         super().__init__()
 
-        if length == 30:
-            out_channels = 120
-        elif length == 60:
-            out_channels = 240
-        elif length == 90:
-            out_channels = 360
-        else:
-            assert False
-
+        out_channels = length * 4
         self.pre_net = nn.Sequential(
             nn.Linear(32, 64),
             nn.BatchNorm1d(64),
@@ -107,27 +92,34 @@ class PoseDecoderConv(nn.Module):
 
 
 class EmbeddingNet(nn.Module):
-    def __init__(self, pose_dim, n_frames):
+    def __init__(self, gesture_dim, n_frames):
         super().__init__()
-        self.pose_encoder = PoseEncoderConv(pose_dim, n_frames)
-        self.decoder = PoseDecoderConv(pose_dim, n_frames)
+        self.gesture_encoder = GestureEncoderConv(gesture_dim, n_frames)
+        self.gesture_decoder = GestureDecoderConv(gesture_dim, n_frames)
 
-    def forward(self, poses):
-        poses_feat = self.pose_encoder(poses)
-        out_poses = self.decoder(poses_feat)
-        return poses_feat, out_poses
+    def forward(self, gestures):
+        gesture_embedding = self.gesture_encoder(gestures)
+        output_gesture = self.gesture_decoder(gesture_embedding)
+        return gesture_embedding, output_gesture
 
 
 if __name__ == '__main__':  # model test
-    n_frames = 90
-    pose_dim = 174
-    encoder = PoseEncoderConv(pose_dim, n_frames)
-    decoder = PoseDecoderConv(pose_dim, n_frames)
+    n_frames = 88
+    gesture_dim = 1141
+    batch_size = 1067
+    gesture = torch.randn((batch_size, n_frames, gesture_dim))
 
-    poses = torch.randn((4, n_frames, pose_dim))
-    feat = encoder(poses)
-    recon_poses = decoder(feat)
+    # encoder = GestureEncoderConv(gesture_dim, n_frames)
+    # decoder = GestureDecoderConv(gesture_dim, n_frames)
+    #
+    # feat = encoder(gesture)
+    # recon_poses = decoder(feat)
+    # #
+    # print('input', gesture.shape)
+    # print('feat', feat.shape)
+    # print('output', recon_poses.shape)
 
-    print('input', poses.shape)
-    print('feat', feat.shape)
-    print('output', recon_poses.shape)
+    model = EmbeddingNet(gesture_dim, n_frames)
+    gesture_embedding, output_gesture = model(gesture)
+    print(gesture_embedding.shape)
+    print(output_gesture.shape)

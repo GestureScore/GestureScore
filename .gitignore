@@ -6,3 +6,5 @@ result/*
 __pycache__/
 *.bin
 *.pth
+*.npz
+*.bvh
