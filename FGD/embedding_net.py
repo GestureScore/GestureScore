@@ -128,6 +128,19 @@ if __name__ == '__main__':  # model test
     batch_size = 1067
     gesture = torch.randn((batch_size, n_frames, gesture_dim))
 
+    # feature_extractor = nn.Sequential(
+    #     ConvNormRelu(gesture_dim, 128, batchnorm=True),
+    #     ConvNormRelu(128, 64, batchnorm=True),
+    #     ConvNormRelu(64, 64, True, batchnorm=True),
+    #     nn.Conv1d(64, 32, 3)
+    # )
+    # # Dynamically calculate the size of flattened features
+    # with torch.no_grad():
+    #     dummy_input = torch.randn(1, n_frames, gesture_dim)
+    #     dummy_features = feature_extractor(dummy_input.transpose(1, 2))
+    #     flattened_size = dummy_features.numel()
+    #     print(flattened_size)
+
     # encoder = GestureEncoder(gesture_dim, n_frames)
     # decoder = GestureDecoder(gesture_dim, n_frames)
     #

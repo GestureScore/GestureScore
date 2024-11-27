@@ -14,9 +14,10 @@ def run_fgd(fgd_evaluator, gt_data, test_data):
     return fgd_on_feat, fdg_on_raw
 
 
-def load_embedding_model(args, device):
+def load_embedding_model(args, gesture_dim, n_frame, device):
     from embedding_net import EmbeddingNet
 
+    print("Loading embedding model...")
     # model
     model_embedding = EmbeddingNet(gesture_dim, n_frame)
     model_embedding.to(device)
@@ -29,22 +30,24 @@ def load_embedding_model(args, device):
     return model_embedding
 
 
-def main(args, n_frame, gesture_dim, device):
+def main(args, gesture_dim, n_frame, device):
     from embedding_space_evaluator import EmbeddingSpaceEvaluator
     from deepgesturedataset import DeepGestureDataset
 
-    model_embedding = load_embedding_model(args, device)
+    model_embedding = load_embedding_model(args, gesture_dim, n_frame, device)
     fgd_evaluator = EmbeddingSpaceEvaluator(model_embedding, gesture_dim, n_frame)
 
+    print("Loading ground truth dataset...")
     real_dataset = DeepGestureDataset(dataset_file=args.real_dataset)
-    real_data = torch.Tensor(real_dataset.get_all())
-    # predict_dataset = DeepGestureDataset(dataset_file=args.predict_dataset)
-    # predict_data = predict_dataset.get_all()
+    real_data = torch.Tensor(real_dataset.get_all()).to(device)
 
-    feat, _ = model_embedding(real_data)
+    print("Loading predicted dataset...")
+    predict_dataset = DeepGestureDataset(dataset_file=args.predict_dataset)
+    predict_data = torch.Tensor(predict_dataset.get_all()).to(device)
 
-    # fgd_on_feat, fgd_on_raw = run_fgd(fgd_evaluator, real_data, predict_data)
-    # print(f'{fgd_on_feat:8.3f}, {fgd_on_raw:8.3f}')
+    print("Evaluating FGD...")
+    fgd_on_feat, fgd_on_raw = run_fgd(fgd_evaluator, real_data, predict_data)
+    print(f'{fgd_on_feat:8.3f}, {fgd_on_raw:8.3f}')
 
     # print(f'----- Experiment (motion chunk length: {chunk_len}) -----')
     # print('FGDs on feature space and raw data space')
@@ -73,6 +76,6 @@ if __name__ == '__main__':
 
     n_frame = 88
     gesture_dim = 1141
-    args.model_embedding_path = f"./output/model_checkpoint_{gesture_dim}_{n_frame}.bin"
+    args.model_embedding_path = f"./output/embedding_network_{gesture_dim}_{n_frame}.pth"
 
-    main(args, n_frame, gesture_dim, device)
+    main(args, gesture_dim, n_frame, device)
