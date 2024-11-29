@@ -10,6 +10,29 @@ This directory provides the scripts for quantitative evaluation of our gesture g
 - Canonical Correlation Analysis (CCA) coefficient
 - Fréchet Gesture Distance (FGD)
 
+## FID Score
+
+### Processing Data:
+
+```bash
+python data_processing.py --real_path="./data/zeggs/real" --predict_path="./data/zeggs/predict" --gpu=mps
+```
+
+### Training Embedding:
+
+```bash
+python training_embedding.py --dataset=../data/real_dataset.npz --gpu=mps --epoch=1
+```
+
+### Evaluation FGD Score
+
+```bash
+cd FGD/
+python evaluate_FGD.py -real=../data/real_dataset.npz -predict ../data/predict_dataset.npz --gpu=mps
+```
+
+
+
 ## Average Jerk and Acceleration (AJ)
 
 ```bash

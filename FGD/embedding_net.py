@@ -124,7 +124,8 @@ class EmbeddingNet(nn.Module):
 
 if __name__ == '__main__':  # model test
     n_frames = 88
-    gesture_dim = 1141
+    # gesture_dim = 1141
+    gesture_dim = 225
     batch_size = 1067
     gesture = torch.randn((batch_size, n_frames, gesture_dim))
 

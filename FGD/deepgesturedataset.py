@@ -28,10 +28,10 @@ class DeepGestureDataset(Dataset):
 
 
 if __name__ == '__main__':
-    # dataset = DeepGestureDataset(dataset_file='../data/real_dataset.npz')
-    # print(len(dataset))
-    # print(dataset[0].shape)
-
-    dataset = DeepGestureDataset(dataset_file='../data/predict_dataset.npz')
+    dataset = DeepGestureDataset(dataset_file='../data/real_dataset.npz')
     print(len(dataset))
     print(dataset[0].shape)
+
+    # dataset = DeepGestureDataset(dataset_file='../data/predict_dataset.npz')
+    # print(len(dataset))
+    # print(dataset[0].shape)

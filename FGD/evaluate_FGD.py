@@ -17,7 +17,7 @@ def run_fgd(fgd_evaluator, gt_data, test_data):
 def load_embedding_model(args, gesture_dim, n_frame, device):
     from embedding_net import EmbeddingNet
 
-    print("Loading embedding model...")
+    print("Loading embedding model at path: {}.".format(args.path))
     # model
     model_embedding = EmbeddingNet(gesture_dim, n_frame)
     model_embedding.to(device)
@@ -37,11 +37,11 @@ def main(args, gesture_dim, n_frame, device):
     model_embedding = load_embedding_model(args, gesture_dim, n_frame, device)
     fgd_evaluator = EmbeddingSpaceEvaluator(model_embedding, gesture_dim, n_frame)
 
-    print("Loading ground truth dataset...")
+    print("Loading ground truth dataset at path {}.".format(args.path))
     real_dataset = DeepGestureDataset(dataset_file=args.real_dataset)
     real_data = torch.Tensor(real_dataset.get_all()).to(device)
 
-    print("Loading predicted dataset...")
+    print("Loading predicted dataset at path {}.".format(args.path))
     predict_dataset = DeepGestureDataset(dataset_file=args.predict_dataset)
     predict_data = torch.Tensor(predict_dataset.get_all()).to(device)
 
@@ -75,7 +75,8 @@ if __name__ == '__main__':
     device = torch.device(args.gpu)
 
     n_frame = 88
-    gesture_dim = 1141
+    # gesture_dim = 1141
+    gesture_dim = 225
     args.model_embedding_path = f"./output/embedding_network_{gesture_dim}_{n_frame}.pth"
 
     main(args, gesture_dim, n_frame, device)
