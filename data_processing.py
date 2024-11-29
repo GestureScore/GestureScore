@@ -2,34 +2,32 @@ from argparse import ArgumentParser
 import os
 import numpy as np
 import torch
+from anim import bvh
 
 
 def load_bvh(bvh_dir):
-    from anim import bvh
-
     bvh_files = [bvh_file for bvh_file in sorted(os.listdir(bvh_dir)) if bvh_file.endswith('.bvh')]
 
     assert len(bvh_files) > 0, 'No .bvh files found in {}'.format(bvh_dir)
 
-    gesture_list = list()
-    names = list()
+    gesture_list = dict()
     for file in bvh_files:
-        names.append(file)
-
         anim_data = bvh.load(os.path.join(bvh_dir, file))
         positions = np.asarray(anim_data['positions'], dtype=np.float32)
-        np_poistion = positions.reshape(positions.shape[0], -1)
-        gesture_list.append(np_poistion)
+        position_flattened = positions.reshape(positions.shape[0], -1)
+        gesture_list[file] = position_flattened
 
-    gesture_bvh = np.array(gesture_list, np.float32)
-    return gesture_bvh, names
+    return gesture_list
 
 
-def sample_all_frame_to_clips(real_data_list, predict_data_list, names, n_frame):
+def sample_all_frame_to_clips(real_data_dict, predict_data_dict, n_frame):
     real_clip = []
     predict_clip = []
 
-    for name, real_data, predict_data in zip(names, real_data_list, predict_data_list):
+    for name in real_data_dict.keys():
+        real_data = real_data_dict[name]
+        predict_data = predict_data_dict[name]
+
         print(f"{name}: [{np.shape(real_data)}], [{np.shape(predict_data)}]")
 
         length = min(real_data.shape[0], predict_data.shape[0])
@@ -61,18 +59,16 @@ if __name__ == '__main__':
     n_frame = 88
 
     print("Loading real bvh files {!r}".format(args.real_path))
-    real_bvh, names = load_bvh(args.real_path)
-    real_data = np.asarray(real_bvh).to(device)
-    print("Real gesture shape ", np.shape(real_data))
+    real_bvh_dict = load_bvh(args.real_path)
+    print("Total real gesture ", len(real_bvh_dict))
 
     print("Loading predict bvh files {!r}".format(args.predict_path))
-    predict_bvh, _ = load_bvh(args.predict_path)
-    predict_data = torch.Tensor(predict_bvh).to(device)
-    print("Predict gesture shape ", np.shape(predict_data))
+    predict_bvh_dict = load_bvh(args.predict_path)
+    print("Total predict gesture ", len(predict_bvh_dict))
 
-    assert len(real_data) == len(predict_data), "Real data and predict data do not match"
+    assert len(real_bvh_dict) == len(predict_bvh_dict), "Real data and predict data do not match"
 
-    real_clip, predict_clip = sample_all_frame_to_clips(real_data, predict_data, names, n_frame)
+    real_clip, predict_clip = sample_all_frame_to_clips(real_bvh_dict, predict_bvh_dict, n_frame)
 
     print(f"real_clip: {np.shape(real_clip)}")
     print(f"predict_clip: {np.shape(predict_clip)}")
