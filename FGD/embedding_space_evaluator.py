@@ -58,60 +58,113 @@ class EmbeddingSpaceEvaluator:
             frechet_dist = 1e+10
         return frechet_dist
 
+    # @staticmethod
+    # def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
+    #     """ from https://github.com/mseitzer/pytorch-fid/blob/master/fid_score.py """
+    #     """Numpy implementation of the Frechet Distance.
+    #     The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
+    #     and X_2 ~ N(mu_2, C_2) is
+    #             d^2 = ||mu_1 - mu_2||^2 + Tr(C_1 + C_2 - 2*sqrt(C_1*C_2)).
+    #     Stable version by Dougal J. Sutherland.
+    #     Params:
+    #     -- mu1   : Numpy array containing the activations of a layer of the
+    #                inception net (like returned by the function 'get_predictions')
+    #                for generated samples.
+    #     -- mu2   : The sample mean over activations, precalculated on an
+    #                representative data set.
+    #     -- sigma1: The covariance matrix over activations for generated samples.
+    #     -- sigma2: The covariance matrix over activations, precalculated on an
+    #                representative data set.
+    #     Returns:
+    #     --   : The Frechet Distance.
+    #     """
+    #
+    #     mu1 = np.atleast_1d(mu1)
+    #     mu2 = np.atleast_1d(mu2)
+    #
+    #     sigma1 = np.atleast_2d(sigma1)
+    #     sigma2 = np.atleast_2d(sigma2)
+    #
+    #     assert mu1.shape == mu2.shape, \
+    #         'Training and test mean vectors have different lengths'
+    #     assert sigma1.shape == sigma2.shape, \
+    #         'Training and test covariances have different dimensions'
+    #
+    #     diff = mu1 - mu2
+    #
+    #     # Product might be almost singular
+    #     covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
+    #     if not np.isfinite(covmean).all():
+    #         msg = ('fid calculation produces singular product; '
+    #                'adding %s to diagonal of cov estimates') % eps
+    #         print(msg)
+    #         offset = np.eye(sigma1.shape[0]) * eps
+    #         covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
+    #
+    #     # Numerical error might give slight imaginary component
+    #     if np.iscomplexobj(covmean):
+    #         if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
+    #             m = np.max(np.abs(covmean.imag))
+    #             raise ValueError('Imaginary component {}'.format(m))
+    #         covmean = covmean.real
+    #
+    #     tr_covmean = np.trace(covmean)
+    #
+    #     return (diff.dot(diff) + np.trace(sigma1) +
+    #             np.trace(sigma2) - 2 * tr_covmean)
     @staticmethod
-    def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
-        """ from https://github.com/mseitzer/pytorch-fid/blob/master/fid_score.py """
-        """Numpy implementation of the Frechet Distance.
-        The Frechet distance between two multivariate Gaussians X_1 ~ N(mu_1, C_1)
-        and X_2 ~ N(mu_2, C_2) is
-                d^2 = ||mu_1 - mu_2||^2 + Tr(C_1 + C_2 - 2*sqrt(C_1*C_2)).
-        Stable version by Dougal J. Sutherland.
-        Params:
-        -- mu1   : Numpy array containing the activations of a layer of the
-                   inception net (like returned by the function 'get_predictions')
-                   for generated samples.
-        -- mu2   : The sample mean over activations, precalculated on an
-                   representative data set.
-        -- sigma1: The covariance matrix over activations for generated samples.
-        -- sigma2: The covariance matrix over activations, precalculated on an
-                   representative data set.
-        Returns:
-        --   : The Frechet Distance.
+    def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6, device=torch.device("cuda:0")):
         """
+        PyTorch implementation of the Frechet Distance.
+        Params:
+        -- mu1   : Torch tensor containing the activations of a layer of the
+                   inception net for generated samples (on GPU).
+        -- mu2   : Torch tensor containing the sample mean over activations
+                   for a representative data set (on GPU).
+        -- sigma1: Torch tensor for the covariance matrix over activations
+                   for generated samples (on GPU).
+        -- sigma2: Torch tensor for the covariance matrix over activations,
+                   precalculated on a representative data set (on GPU).
+        Returns:
+        --   : The Frechet Distance as a scalar.
+        """
+        mu1 = torch.Tensor(mu1).to(dtype=torch.float32).to(device)
+        mu2 = torch.Tensor(mu2).to(dtype=torch.float32).to(device)
+        sigma1 = torch.Tensor(sigma1).to(dtype=torch.float32).to(device)
+        sigma2 = torch.Tensor(sigma2).to(dtype=torch.float32).to(device)
 
-        mu1 = np.atleast_1d(mu1)
-        mu2 = np.atleast_1d(mu2)
+        # Ensure tensors are at least 2D
+        mu1 = mu1.view(-1)
+        mu2 = mu2.view(-1)
+        sigma1 = sigma1.view(sigma1.shape)
+        sigma2 = sigma2.view(sigma2.shape)
 
-        sigma1 = np.atleast_2d(sigma1)
-        sigma2 = np.atleast_2d(sigma2)
-
-        assert mu1.shape == mu2.shape, \
-            'Training and test mean vectors have different lengths'
-        assert sigma1.shape == sigma2.shape, \
-            'Training and test covariances have different dimensions'
+        # Validate dimensions
+        assert mu1.shape == mu2.shape, "Training and test mean vectors have different lengths"
+        assert sigma1.shape == sigma2.shape, "Training and test covariances have different dimensions"
 
         diff = mu1 - mu2
 
-        # Product might be almost singular
-        covmean, _ = linalg.sqrtm(sigma1.dot(sigma2), disp=False)
-        if not np.isfinite(covmean).all():
-            msg = ('fid calculation produces singular product; '
-                   'adding %s to diagonal of cov estimates') % eps
+        # Compute sqrtm of covariance product using SVD
+        cov_prod = sigma1 @ sigma2
+        u, s, v = torch.svd(cov_prod)
+
+        # Reconstruct the matrix square root
+        sqrt_cov_prod = u @ torch.diag(torch.sqrt(s)) @ v.T
+
+        # Handle numerical issues (adding epsilon to diagonal for stability)
+        if not torch.all(torch.isfinite(sqrt_cov_prod)):
+            msg = f'FID calculation produces singular product; adding {eps} to diagonal of cov estimates'
             print(msg)
-            offset = np.eye(sigma1.shape[0]) * eps
-            covmean = linalg.sqrtm((sigma1 + offset).dot(sigma2 + offset))
+            offset = torch.eye(sigma1.size(0), device=sigma1.device) * eps
+            sqrt_cov_prod = torch.svd((sigma1 + offset) @ (sigma2 + offset))[0]
 
-        # Numerical error might give slight imaginary component
-        if np.iscomplexobj(covmean):
-            if not np.allclose(np.diagonal(covmean).imag, 0, atol=1e-3):
-                m = np.max(np.abs(covmean.imag))
-                raise ValueError('Imaginary component {}'.format(m))
-            covmean = covmean.real
+        # Trace of the square root of the covariance product
+        tr_covmean = torch.trace(sqrt_cov_prod)
 
-        tr_covmean = np.trace(covmean)
-
-        return (diff.dot(diff) + np.trace(sigma1) +
-                np.trace(sigma2) - 2 * tr_covmean)
+        # Final computation
+        fid = diff @ diff + torch.trace(sigma1) + torch.trace(sigma2) - 2 * tr_covmean
+        return fid.item()
 
 
 if __name__ == '__main__':
@@ -121,7 +174,8 @@ if __name__ == '__main__':
 
     batch_size = 1067
     n_frame = 88
-    gesture_dim = 1141
+    # gesture_dim = 1141
+    gesture_dim = 225
 
     # model
     model_embedding = EmbeddingNet(gesture_dim, n_frame)

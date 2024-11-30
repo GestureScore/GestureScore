@@ -44,7 +44,7 @@ def sample_all_frame_to_clips(real_data_dict, predict_data_dict, n_frame):
 
 if __name__ == '__main__':
     """
-    python data_processing.py --real_path="./data/zeggs/real" --predict_path="./data/zeggs/predict"
+    python data_processing.py --real_path=./data/zeggs/real --predict_path=./data/zeggs/predict --gpu=cuda:0
     """
     # Setup parameter parser
     parser = ArgumentParser(add_help=False)

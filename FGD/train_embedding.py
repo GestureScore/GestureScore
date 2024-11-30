@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch import optim
 from torch.utils.data import TensorDataset, DataLoader
 from argparse import ArgumentParser
-
+from pprint import pprint
 from embedding_net import EmbeddingNet
 from deepgesturedataset import DeepGestureDataset
 
@@ -69,13 +69,19 @@ def main(args, gesture_dim, n_frames, device):
 
     # interval params
     print_interval = int(len(train_loader) / 5)
+    print("Total train loader ", len(train_loader))
+    print("Start training with print_interval", print_interval)
 
     model = EmbeddingNet(gesture_dim, n_frames).to(device)
     gen_optimizer = optim.Adam(model.parameters(), lr=0.0005, betas=(0.5, 0.999))
 
+    epoch = 0
+    i = 0
     # training
     for epoch in range(args.epoch):
-        print('Epoch {}/{}'.format(epoch + 1, args.epoch))
+        if epoch % 50 == 0:
+            print('Epoch {}/{}'.format(epoch + 1, args.epoch))
+
         for i, batch in enumerate(train_loader, 0):
             batch_gesture = np.asarray(batch, np.float32)
             target_vec = torch.Tensor(batch_gesture).to(device)
@@ -88,7 +94,7 @@ def main(args, gesture_dim, n_frames, device):
                     loss_meter.update(loss[name], args.batch_size)
 
             # print training status
-            if (i + 1) % print_interval == 0:
+            if epoch % 1000 == 0 and (i + 1) % print_interval == 0:
                 print_summary = 'EP {} ({:3d}) | '.format(epoch, i + 1)
                 for loss_meter in loss_meters:
                     if loss_meter.count > 0:
@@ -96,28 +102,42 @@ def main(args, gesture_dim, n_frames, device):
                         loss_meter.reset()
                 print(print_summary)
 
+        if epoch % 100000 == 0:
+            state_dict = model.cpu().state_dict()
+            file_path = f'output/embedding_network_{gesture_dim}_{n_frames}_{epoch}.pth'
+            print("Saving checkpoint to {}".format(file_path))
+            torch.save({'gesture_dim': gesture_dim, 'n_frames': n_frames, 'embedding_model': state_dict}, file_path)
+
     # save model
     state_dict = model.cpu().state_dict()
-    file_path = f'output/embedding_network_{gesture_dim}_{n_frames}.pth'
+    file_path = f'output/embedding_network_{gesture_dim}_{n_frames}_final.pth'
     print("Saving checkpoint to {}".format(file_path))
     torch.save({'gesture_dim': gesture_dim, 'n_frames': n_frames, 'embedding_model': state_dict}, file_path)
+
+    print_summary = 'EP {} ({:3d}) | '.format(epoch, i + 1)
+    for loss_meter in loss_meters:
+        if loss_meter.count > 0:
+            print_summary += '{}: {:.3f}, '.format(loss_meter.name, loss_meter.avg)
+            loss_meter.reset()
+    print(print_summary)
 
 
 if __name__ == '__main__':
     """
-    python train_AE.py --dataset=../data/real_dataset.npz --gpu=cuda:0
+    python train_embedding.py --dataset=../data/real_dataset.npz --gpu=cuda:0
     """
     parser = ArgumentParser(add_help=False)
     parser.add_argument('--dataset', '-d', required=True, default="../data/real_dataset.npz",
                         help="")
     parser.add_argument('--gpu', '-gpu', required=True, default="cuda:0",
                         help="")
-    parser.add_argument('--epoch', '-epoch', type=int, default=50,
+    parser.add_argument('--epoch', '-epoch', type=int, default=500000,
                         help="")
     parser.add_argument('--batch_size', '-bs', type=int, default=64,
                         help="")
 
     args = parser.parse_args()
+    pprint(args)
 
     n_frames = 88
     # gesture_dim = 1141
