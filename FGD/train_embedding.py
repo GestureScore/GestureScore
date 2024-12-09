@@ -124,16 +124,16 @@ def main(args, gesture_dim, n_frames, device):
 
 if __name__ == '__main__':
     """
-    python train_embedding.py --dataset=../data/real_dataset.npz --gpu=cuda:0
+    python train_embedding.py --dataset=../data/ground_truth_dataset.npz --gpu=cuda:0
     """
     parser = ArgumentParser(add_help=False)
-    parser.add_argument('--dataset', '-d', required=True, default="../data/real_dataset.npz",
+    parser.add_argument('--dataset', '-d', required=True, default="../data/ground_truth_dataset.npz",
                         help="")
     parser.add_argument('--gpu', '-gpu', required=True, default="cuda:0",
                         help="")
     parser.add_argument('--epoch', '-epoch', type=int, default=500000,
                         help="")
-    parser.add_argument('--batch_size', '-bs', type=int, default=64,
+    parser.add_argument('--batch_size', '-bs', type=int, default=2048,
                         help="")
 
     args = parser.parse_args()

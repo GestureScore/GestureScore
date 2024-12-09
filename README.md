@@ -18,6 +18,11 @@ This directory provides the scripts for quantitative evaluation of our gesture g
 python data_processing.py --real_path="./data/zeggs/real" --predict_path="./data/zeggs/predict"
 ```
 
+```bash
+python visualize_dataset.py --predict="./data/predict_dataset.npz" --real="./data/real_dataset.npz"
+```
+
+
 ### Training Embedding:
 
 ```bash
