@@ -8,3 +8,5 @@ __pycache__/
 *.pth
 *.npz
 *.bvh
+.idea/
+.idea
