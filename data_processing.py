@@ -45,7 +45,7 @@ def sample_all_frame_to_clips(real_data_dict, predict_data_dict, n_frame):
 
 if __name__ == '__main__':
     """
-    python data_processing.py --real_path=./data/zeggs/real --predict_path=./data/zeggs/predict --gpu=cuda:0
+    python data_processing.py --real_path=./data/zeggs/real --predict_path=./data/zeggs/predict
     """
     # Setup parameter parser
     parser = ArgumentParser(add_help=False)
@@ -53,10 +53,7 @@ if __name__ == '__main__':
                         help="")
     parser.add_argument('--predict_path', '-predict', required=True, default="./data/zeggs/predict",
                         help="")
-    parser.add_argument('--gpu', '-gpu', required=True, default="cuda:0",
-                        help="")
     args = parser.parse_args()
-    device = torch.device(args.gpu)
     n_frame = 88
 
     print("Loading real bvh files {!r}".format(args.real_path))

@@ -15,7 +15,7 @@ This directory provides the scripts for quantitative evaluation of our gesture g
 ### Processing Data:
 
 ```bash
-python data_processing.py --real_path="./data/zeggs/real" --predict_path="./data/zeggs/predict" --gpu=mps
+python data_processing.py --real_path="./data/zeggs/real" --predict_path="./data/zeggs/predict"
 ```
 
 ### Training Embedding:
