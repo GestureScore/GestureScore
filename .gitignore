@@ -9,4 +9,5 @@ __pycache__/
 *.npz
 *.bvh
 .idea/
-.idea
+plot/*
+plot/compare/*
