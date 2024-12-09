@@ -12,8 +12,9 @@ def load_bvh(bvh_dir):
 
     gesture_list = dict()
     for file in bvh_files:
+        print("Loading {}".format(os.path.join(bvh_dir, file)))
         anim_data = bvh.load(os.path.join(bvh_dir, file))
-        positions = np.asarray(anim_data['positions'], dtype=np.float32)
+        positions = np.asarray(anim_data['rotations'], dtype=np.float32)
         position_flattened = positions.reshape(positions.shape[0], -1)
         gesture_list[file] = position_flattened
 
@@ -74,4 +75,6 @@ if __name__ == '__main__':
     print(f"predict_clip: {np.shape(predict_clip)}")
 
     np.savez_compressed('./data/real_dataset.npz', gesture=real_clip)
+    print("Saved ./data/real_dataset.npz")
     np.savez_compressed('./data/predict_dataset.npz', gesture=predict_clip)
+    print("Saved ./data/predict_dataset.npz")

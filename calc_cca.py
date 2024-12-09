@@ -147,11 +147,11 @@ def evaluate_folder(cond_name, coords_dir):
 
 
 if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(
-        description='Calculate prediction errors')
-    parser.add_argument('--coords_dir', '-c', default='data',
-                        help='Predicted gesture directory')
+    """
+    python calc_cca.py
+    """
+    parser = argparse.ArgumentParser(description='Calculate prediction errors')
+    parser.add_argument('--coords_dir', '-c', default='data', help='Predicted gesture directory')
     args = parser.parse_args()
 
     # Make sure that data is stored in the correct folder

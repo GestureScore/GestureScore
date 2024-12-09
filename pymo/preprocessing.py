@@ -17,10 +17,11 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 class MocapParameterizer(BaseEstimator, TransformerMixin):
     def __init__(self, param_type='euler'):
-        '''
-
+        """
         param_type = {'euler', 'quat', 'expmap', 'position', 'expmap2pos'}
-        '''
+        Args:
+            param_type:
+        """
         self.param_type = param_type
 
     def fit(self, X, y=None):
