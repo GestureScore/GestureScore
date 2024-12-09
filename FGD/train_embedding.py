@@ -133,7 +133,7 @@ if __name__ == '__main__':
                         help="")
     parser.add_argument('--epoch', '-epoch', type=int, default=500000,
                         help="")
-    parser.add_argument('--batch_size', '-bs', type=int, default=2048,
+    parser.add_argument('--batch_size', '-bs', type=int, default=128,
                         help="")
 
     args = parser.parse_args()
