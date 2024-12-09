@@ -47,7 +47,7 @@ def main(args, gesture_dim, n_frame, device):
 
     print("Evaluating FGD...")
     fgd_on_feat, fgd_on_raw = run_fgd(fgd_evaluator, real_data, predict_data)
-    print(f'{fgd_on_feat:8.3f}, {fgd_on_raw:8.3f}')
+    print(f'fgd_on_feat: {fgd_on_feat:8.3f}, fgd_on_raw: {fgd_on_raw:8.3f}')
 
     # print(f'----- Experiment (motion chunk length: {chunk_len}) -----')
     # print('FGDs on feature space and raw data space')
